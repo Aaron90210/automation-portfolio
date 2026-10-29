@@ -1,0 +1,117 @@
+{
+  "name": "Build P2",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "f1b64ede-dfe3-40a4-9d9e-47c5d43aa128",
+        "options": {}
+      },
+      "id": "d93ad452-24af-4719-8a55-de0e94b9fe51",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "f1b64ede-dfe3-40a4-9d9e-47c5d43aa128"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2e9ff4ab-112e-4a13-af5a-e105a5c0d714",
+              "leftValue": "={{ $json.body.urgency }}",
+              "rightValue": "high",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "198b5ae5-b121-4b4c-b100-4e067159bc2a",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "disciplinee90210@gmail.com",
+        "subject": "=Urgent request received: {{ $json.body.subject || \"high urgency\" }}",
+        "emailType": "text",
+        "message": "=A high-urgency request was received.\n\nDetails:\n{{ JSON.stringify($json.body, null, 2) }}",
+        "options": {}
+      },
+      "id": "93b1d3c9-5f8d-4348-9137-575cead3ca83",
+      "name": "Send a message",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        -96
+      ],
+      "webhookId": "7c5afc9e-a090-4bf0-b1fd-dd8756b8e1c0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PhiMuNud3xE7npTu",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ca79aaa7-93c8-46ec-bee3-c9de4a567c4a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5c7d863aef597403af6c2e62bdf2daefa06ca46b34e95e6e2fe73a142dfc8641"
+  },
+  "nodeGroups": [],
+  "id": "LBvTf6PXPHLBW2P7",
+  "tags": []
+}

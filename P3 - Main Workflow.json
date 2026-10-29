@@ -1,0 +1,56 @@
+{
+  "name": "P3 - Main Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "46ea165a-b9f1-42c3-b612-54b7dd2cff0d",
+      "name": "When clicking ‘Execute workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "errorMessage": "P3 Test Failure: This is a deliberate error."
+      },
+      "id": "a1aeae64-41f2-4cac-a4f6-c035339aac5f",
+      "name": "Stop and Error",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Stop and Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "errorWorkflow": "6FsRJ9nCHt6JSLah"
+  },
+  "versionId": "eb5a6ece-a5c5-4fe1-a889-2a07a8ddb8e0",
+  "meta": {
+    "instanceId": "5c7d863aef597403af6c2e62bdf2daefa06ca46b34e95e6e2fe73a142dfc8641"
+  },
+  "nodeGroups": [],
+  "id": "grDv8LEpUJ8cjt3U",
+  "tags": []
+}
