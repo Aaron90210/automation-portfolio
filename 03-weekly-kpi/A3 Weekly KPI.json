@@ -1,0 +1,253 @@
+{
+  "name": "A3 Weekly KPI",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                5
+              ],
+              "triggerAtHour": 17
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        32,
+        176
+      ],
+      "id": "812ccc08-02de-4bcf-b025-b2d67dabd33d",
+      "name": "Weekly Schedule (Friday 5PM)"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "orders",
+        "limit": 200
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        256,
+        176
+      ],
+      "id": "933341a0-897e-474b-ad89-e98a38045c4e",
+      "name": "Fetch Orders Data",
+      "credentials": {
+        "supabaseApi": {
+          "id": "gvR2N3tCExAlWtZ9",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let totalRevenue = 0;\nlet thisWeek = 0;\nlet lastWeek = 0;\n\nconst today = new Date();\n\nfor (const item of $input.all()) {\n  const amount = parseFloat(item.json.amount || 0);\n  const orderDate = new Date(item.json.order_date);\n  \n  // Calculate difference in days\n  const diffTime = Math.abs(today - orderDate);\n  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));\n\n  totalRevenue += amount;\n\n  if (diffDays <= 7) {\n    thisWeek += amount;\n  } else if (diffDays > 7 && diffDays <= 14) {\n    lastWeek += amount;\n  }\n}\n\nreturn [{ \n  json: { \n    total_revenue: totalRevenue,\n    this_week: thisWeek,\n    last_week: lastWeek\n  } \n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        176
+      ],
+      "id": "0e77478d-2762-48dc-8970-22fe579ee077",
+      "name": "Calculate KPIs"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a data analyst writing a weekly KPI report for the sales team.\n\nHere are the numbers:\nTotal Revenue: {{ $json.total_revenue }}\nThis Week's Revenue: {{ $json.this_week }}\nLast Week's Revenue: {{ $json.last_week }}\nWrite a short, 2-3 sentence commentary on these results. Mention if revenue went up or down compared to last week. Keep it professional and encouraging. Do not use markdown.\n\n",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        704,
+        176
+      ],
+      "id": "938424e0-e103-4f3b-8841-f425038f9512",
+      "name": "AI Write Commentary"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        784,
+        400
+      ],
+      "id": "dd2b85a0-616c-4538-aeaf-eca4ee75cda3",
+      "name": "Generate Commentary",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "s9FXxWidlg1dQkGp",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the data from previous nodes\nconst data = $('Calculate KPIs').first().json; // The node where we calculated the numbers\nconst aiCommentary = $input.first().json.text; // The AI's text\n\n// Format the numbers with commas\nconst totalRev = Number(data.total_revenue).toLocaleString();\nconst thisWeek = Number(data.this_week).toLocaleString();\nconst lastWeek = Number(data.last_week).toLocaleString();\n\n// Build the final report\nconst finalReport = `\nWEEKLY KPI REPORT\n-----------------\nTotal Revenue: $${totalRev}\nThis Week: $${thisWeek}\nLast Week: $${lastWeek}\n\nCOMMENTARY:\n${aiCommentary}\n`;\n\nreturn [{ json: { report: finalReport } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        176
+      ],
+      "id": "d68e74cb-654e-4f37-be35-54f2aa103c3f",
+      "name": "Format Final Report"
+    },
+    {
+      "parameters": {
+        "sendTo": "disciplinee90210@gmail.com",
+        "subject": "Weekly KPI Report",
+        "message": "={{ $json.report }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1280,
+        176
+      ],
+      "id": "64c87b61-d68a-47f8-af9a-754d172ee1d5",
+      "name": "Email Report",
+      "webhookId": "2da8a833-293c-4b97-b1bd-b7bb641a5373",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JnsVwZ3CmBdIXkqx",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0CJKCQ4PR7",
+          "mode": "list",
+          "cachedResultName": "automation-alerts-channel"
+        },
+        "text": "={{ $('Format Final Report').item.json.report }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        1504,
+        176
+      ],
+      "id": "f7340634-289a-4eb5-91f7-cb57a0da6158",
+      "name": "Post to Slack",
+      "webhookId": "71b356e3-4b8e-46e0-8c2f-4066038f3e1c",
+      "credentials": {
+        "slackApi": {
+          "id": "OgnckFcOM8QNGFzw",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Weekly Schedule (Friday 5PM)": {
+      "main": [
+        [
+          {
+            "node": "Fetch Orders Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Orders Data": {
+      "main": [
+        [
+          {
+            "node": "Calculate KPIs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate KPIs": {
+      "main": [
+        [
+          {
+            "node": "AI Write Commentary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Write Commentary": {
+      "main": [
+        [
+          {
+            "node": "Format Final Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Commentary": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Write Commentary",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Final Report": {
+      "main": [
+        [
+          {
+            "node": "Email Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Report": {
+      "main": [
+        [
+          {
+            "node": "Post to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "cd00d696-5281-44b8-8c34-7549504f09eb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8db7fadead9e8a312a7283c8a846de056b308971de5bc82a192b771628dbc959"
+  },
+  "nodeGroups": [],
+  "id": "4c9ttWLfD0gCJnaH",
+  "tags": []
+}
