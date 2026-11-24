@@ -32,4 +32,5 @@ n8n (self-hosted via Docker), Google Gemini (or OpenAI), Google Sheets API, Slac
 
 ## 9. Limitations & Improvements
 Limitation: The AI occasionally hallucinates the JSON format if the prompt is too vague. 
+
 Improvement: I will add a fallback error workflow to catch invalid JSON.
