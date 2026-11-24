@@ -1,0 +1,521 @@
+{
+  "name": "Lead Router",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fbd98caa-9d12-4b3e-a5eb-d4574793139f",
+              "name": "Name",
+              "value": "={{ $json.Name }}.trim()",
+              "type": "string"
+            },
+            {
+              "id": "b763920c-a278-461c-aecd-c80735e89b78",
+              "name": "Company",
+              "value": "={{ $json.Company }}.trim()",
+              "type": "string"
+            },
+            {
+              "id": "3c537efb-983d-4ac3-8c43-57fd173cbb45",
+              "name": "Message",
+              "value": "={{ $json.Message }}.trim()",
+              "type": "string"
+            },
+            {
+              "id": "dcadb2eb-7ad6-4684-a552-d9825ca33dd6",
+              "name": "Budget",
+              "value": "={{ $json.Budget }}.trim()",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        720,
+        -160
+      ],
+      "id": "c41e7f42-2f76-46cd-b32f-c899d72d9fdb",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert sales qualification assistant. Your job is to evaluate inbound leads based on their name, company, message, and budget. \n Lead Details: Name: {{ $json.Name }} Company: {{ $json.Company }} Message: {{$json.Message }} Budget: {{ $json.Budget }}  Evaluate this lead. Determine if they are a \"High\" fit or \"Low\" fit based on whether their budget is above 1000 and if their message indicates a genuine need for automation.  You must return ONLY a valid JSON object. Do not include any other text, markdown formatting, or explanations.  Format: { \"fit\": \"High\" | \"Low\", \"reason\": \"A one-sentence explanation of why you gave this score.\", \"next_step\": \"A short action item for the sales team based on this fit.\" }",
+        "messages": {
+          "messageValues": []
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        944,
+        -160
+      ],
+      "id": "21af6994-d754-4b94-af07-29d7adae1eec",
+      "name": "Lead Evaluation"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        1016,
+        72
+      ],
+      "id": "64e51e38-babe-4fbd-ac09-2cc7c6eb9b5c",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "s9FXxWidlg1dQkGp",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the original form data from the node BEFORE the LLM\nconst formData = $('Lead Intake Form').first().json; \n\n// Get the AI's output\nconst llmOutput = $input.first().json.text;\n\ntry {\n  const parsedData = JSON.parse(llmOutput);\n  return [{ \n    json: { \n      ...formData, \n      ...parsedData \n    } \n  }];\n} catch (error) {\n  throw new Error(\"AI did not return valid JSON: \" + llmOutput);\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1296,
+        -160
+      ],
+      "id": "b9a1b20a-8038-43cf-a90c-f905006b9d2d",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "c5797d8e-4dbf-4381-9efa-298d1efc090a",
+              "leftValue": "={{ $json.fit }}",
+              "rightValue": "High",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1520,
+        -160
+      ],
+      "id": "58b1d530-99e2-4f35-9040-4352ddebe831",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0CJKCQ4PR7",
+          "mode": "list",
+          "cachedResultName": "automation-alerts-channel"
+        },
+        "text": "=🔥 HOT LEAD! \nName: {{ $json.Name }} \nCompany: {{ $json.Company }}. \nReason: {{ $json.reason }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        1968,
+        -256
+      ],
+      "id": "7365bd0a-c28b-47f0-b029-cba47a97bc5d",
+      "name": "Send a message",
+      "webhookId": "b3b17533-09d7-416b-8e92-afe576c66120",
+      "credentials": {
+        "slackApi": {
+          "id": "OgnckFcOM8QNGFzw",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1bJZoSiQ69vEz6zdfDvRWHLCpd4QuU5fCs-765egbsgQ",
+          "mode": "list",
+          "cachedResultName": "Lead Router",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bJZoSiQ69vEz6zdfDvRWHLCpd4QuU5fCs-765egbsgQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bJZoSiQ69vEz6zdfDvRWHLCpd4QuU5fCs-765egbsgQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.Name }}",
+            "Company": "={{ $json.Company }}",
+            "Budget": "={{ $json.Budget }}",
+            "Reason": "={{ $json.reason }}",
+            "Fit": "={{ $json.fit }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Budget",
+              "displayName": "Budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Fit",
+              "displayName": "Fit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reason",
+              "displayName": "Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1744,
+        -64
+      ],
+      "id": "317362ab-9ee9-45c4-a3cd-320cd9d3b743",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "G1SOUkAIhFBnRpMF",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "=Update on your automation inquiry",
+        "message": "=Hi {{ $json.Name }}, thank you for reaching out. We are currently reviewing your request and will get back to you shortly. Peace!",
+        "options": {
+          "sendTo": "aaronrumenera07@gmail.com"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1968,
+        -64
+      ],
+      "id": "3598493e-3172-45aa-89df-f163059ac862",
+      "name": "Create a draft",
+      "webhookId": "0dae2d83-2314-44da-8c47-73e61cc3ff16",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JnsVwZ3CmBdIXkqx",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "Contact us",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Company"
+            },
+            {
+              "fieldLabel": "Message",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Budget"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Lead Intake Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        496,
+        -160
+      ],
+      "id": "8817dc8a-0ff2-4a06-9624-da2f0366d656",
+      "webhookId": "87002128-55f9-4cc4-961c-8c86ee69e6c8"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1bJZoSiQ69vEz6zdfDvRWHLCpd4QuU5fCs-765egbsgQ",
+          "mode": "list",
+          "cachedResultName": "Lead Router",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bJZoSiQ69vEz6zdfDvRWHLCpd4QuU5fCs-765egbsgQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bJZoSiQ69vEz6zdfDvRWHLCpd4QuU5fCs-765egbsgQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.Name }}",
+            "Company": "={{ $json.Company }}",
+            "Budget": "={{ $json.Budget }}",
+            "Fit": "={{ $json.fit }}",
+            "Reason": "={{ $json.reason }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Budget",
+              "displayName": "Budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Fit",
+              "displayName": "Fit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Reason",
+              "displayName": "Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1744,
+        -256
+      ],
+      "id": "341f534a-53d8-4eba-a168-1c9254fb8ce6",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "G1SOUkAIhFBnRpMF",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Lead Evaluation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Evaluation": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Lead Evaluation",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Create a draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Intake Form": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "Africa/Kigali",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "errorWorkflow": "u5E5mSvoGpRKhrL6"
+  },
+  "versionId": "d912d7ab-2f20-40f9-a5ba-a96c01890a3c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8db7fadead9e8a312a7283c8a846de056b308971de5bc82a192b771628dbc959"
+  },
+  "nodeGroups": [],
+  "id": "VWiYjvPs9MUGzG5S",
+  "tags": []
+}
