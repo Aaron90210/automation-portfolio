@@ -1,15 +1,34 @@
-Problem: Support teams get overwhelmed by repetitive emails and struggle to prioritize urgent issues.
+# AI Inbox Triage & Draft Assistant | n8n, LLM, Gmail, Slack
 
-Demo Video: (Leave blank for now, you will record it later).
+## 2. The Problem
+Support teams get overwhelmed by repetitive emails and struggle to prioritize urgent issues. This workflow automates the initial triage, categorizes the email, and drafts a reply, ensuring urgent issues are flagged immediately.
 
-Canvas Screenshot: (Take a screenshot of your workflow).
+## 3. Demo Video Link
+[Paste your YouTube Unlisted link here]
 
-How it works: Gmail Trigger -> AI Classifies & Drafts Reply -> Gmail Creates Draft -> Google Sheet Logs it -> Slack Alerts if Urgent.
+## 4. Canvas Screenshot
+![n8n Workflow Canvas](URL_TO_YOUR_SCREENSHOT_HERE)
 
-Tools: n8n, Gmail API, Google Sheets, Slack.
+## 5. How It Works
+1. A new email arrives in the test inbox.
+2. An LLM reads the email and categorizes it (Billing, Bug, How-To, Other).
+3. The LLM drafts a polite, professional reply based on a strict policy.
+4. Gmail creates a draft (never sends automatically) for human review.
+5. The email details and AI response are logged to a Google Sheet.
+6. If the urgency is "High," a Slack alert is sent to the team.
+7. An Error Handler workflow catches any failures and alerts the team.
 
-Sample Input/Output: Show an email and the resulting JSON draft.
+## 6. Tools & Credentials Needed
+n8n (self-hosted via Docker), Google Gemini (or OpenAI), Gmail API, Google Sheets, Slack.
 
-Test Results: (This is where you write what happened when you sent the 30 emails. Did the AI classify them correctly? Did any fail?)
+## 7. Sample Input / Output
+**Input:**
+An email from a customer: "I was charged twice this month. Refund me now."
 
-Limitations: (e.g., "The AI doesn't read attachments yet").
+**Output:**
+```json
+{
+  "category": "Billing",
+  "urgency": "High",
+  "draft_reply": "Dear Customer, we apologize for the inconvenience. Our billing team will review this and get back to you within 24 hours."
+}
