@@ -18,6 +18,7 @@ Manually compiling weekly sales data and writing summary reports is time-consumi
 6. The final report is sent via Email and posted to a Slack channel.
 
 ## 6. Tools & Credentials Needed
+
 n8n (self-hosted via Docker), Supabase (PostgreSQL), Google Gemini (or OpenAI), Gmail API, Slack API.
 
 ## 7. Sample Input / Output
@@ -25,3 +26,12 @@ n8n (self-hosted via Docker), Supabase (PostgreSQL), Google Gemini (or OpenAI), 
 ```sql
 select sum(amount) as total_revenue from orders;
 -- Returns: 59316
+
+## 8. Test Results
+I verified the output by running the raw SQL queries directly in the Supabase SQL editor. The n8n Code node's calculations matched the database exactly. The LLM successfully generated a 2-sentence commentary that accurately reflected the week-over-week growth.
+
+9. Limitations & Improvements
+Limitation: The current date logic is hardcoded to compare the last 7 days to the previous 7 days.
+Improvement: In the future, I would add a "Date Range" parameter to the Schedule Trigger so the user could generate a report for a custom timeframe (e.g., Month-over-Month).
+
+
