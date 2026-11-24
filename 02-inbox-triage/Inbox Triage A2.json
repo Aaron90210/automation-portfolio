@@ -1,0 +1,366 @@
+{
+  "name": "Inbox Triage",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        -96
+      ],
+      "id": "0c617c97-89e7-4f4e-b18e-2b05ffbe6735",
+      "name": "Watch Test Inbox",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JnsVwZ3CmBdIXkqx",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a polite and helpful customer support agent. Read the customer's email below and draft a response based on these policies:\n\nBilling Issues: Apologize for the inconvenience. State that you are looking into the charge. Do NOT promise a refund directly, say \"Our billing team will review this and get back to you within 24 hours.\"\n\nBug Reports: Thank them for reporting it. Ask them for a screenshot or the exact steps they took to encounter the bug.\n\nHow-To Questions: Provide a brief, helpful answer. If you don't know, tell them you will escalate it to a technical specialist.\n\nTone: Professional, empathetic, and concise.\n\nHere is the customer email:\nFrom: {{ $json.From }} Subject: {{ $json.Subject }} Message:{{ $json.snippet }}\n\nYou must return ONLY a valid JSON object. Do not include any other text, markdown formatting, or explanations.\n\nFormat:\n{\n\"category\": \"Billing\" | \"Bug\" | \"How-To\" | \"Other\",\n\"urgency\": \"High\" | \"Medium\" | \"Low\",\n\"draft_reply\": \"The exact text of the email reply you would send to the customer.\"\n}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        224,
+        -96
+      ],
+      "id": "574de027-47d9-4f97-a403-dd95b2f456d1",
+      "name": "AI Classify & Draft"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        304,
+        144
+      ],
+      "id": "08bd77c1-262d-44fb-808b-ea2cc83612a1",
+      "name": "Classify then draft",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "s9FXxWidlg1dQkGp",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const emailData = $('Watch Test Inbox').first().json; \nconst llmOutput = $input.first().json.text;\n\ntry {\n  const parsedData = JSON.parse(llmOutput);\n  return [{ \n    json: { \n      ...emailData, \n      ...parsedData \n    } \n  }];\n} catch (error) {\n  throw new Error(\"AI did not return valid JSON: \" + llmOutput);\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        -96
+      ],
+      "id": "282643f3-16a7-4888-9000-3667fd39cb54",
+      "name": "Parse AI Response"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "32873fc8-024f-4e26-8165-7d91065ed1e0",
+              "leftValue": "={{ $json.urgency }}",
+              "rightValue": "High",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1248,
+        -96
+      ],
+      "id": "dc246a31-43e8-4481-b1d0-1251842eef40",
+      "name": "Is Urgent?"
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "=Re:  {{ $json.Subject }}",
+        "message": "={{ $json.draft_reply }}",
+        "options": {
+          "sendTo": "={{ $json.To }}"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        800,
+        -96
+      ],
+      "id": "0f5f6b6c-6609-4fd5-b5cc-d70533829b28",
+      "name": "Create Gmail Draft",
+      "webhookId": "886b553a-f028-40bf-88e7-e04b90e311bf",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JnsVwZ3CmBdIXkqx",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1bJZoSiQ69vEz6zdfDvRWHLCpd4QuU5fCs-765egbsgQ",
+          "mode": "list",
+          "cachedResultName": "Lead Router",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bJZoSiQ69vEz6zdfDvRWHLCpd4QuU5fCs-765egbsgQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 364070454,
+          "mode": "list",
+          "cachedResultName": "Email Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1bJZoSiQ69vEz6zdfDvRWHLCpd4QuU5fCs-765egbsgQ/edit#gid=364070454"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Category": "={{ $('Parse AI Response').item.json.category }}",
+            "Subject": "={{ $('Parse AI Response').item.json.Subject }}",
+            "From": "={{ $('Parse AI Response').item.json.From }}",
+            "Urgency": "={{ $('Parse AI Response').item.json.urgency }}",
+            "Draft Reply": "={{ $('Parse AI Response').item.json.draft_reply }}",
+            "Date": "={{$json.Date}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "From",
+              "displayName": "From",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Urgency",
+              "displayName": "Urgency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Draft Reply",
+              "displayName": "Draft Reply",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1024,
+        -96
+      ],
+      "id": "576bc5db-012e-4fef-8fcb-7c8e648f9f24",
+      "name": "Log to Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "G1SOUkAIhFBnRpMF",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0CJKCQ4PR7",
+          "mode": "list",
+          "cachedResultName": "automation-alerts-channel"
+        },
+        "text": "=🚨 URGENT EMAIL: From {{ $json.From }}. Subject: {{ $json.Subject }}. The AI has drafted a reply, please review it in your Gmail drafts.",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        1472,
+        -96
+      ],
+      "id": "53dcb234-d195-4d8a-87e4-4aac23c87eae",
+      "name": "Alert on Slack",
+      "webhookId": "f68cb3f1-c53c-45a9-81d7-0883292df92b",
+      "credentials": {
+        "slackApi": {
+          "id": "OgnckFcOM8QNGFzw",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Watch Test Inbox": {
+      "main": [
+        [
+          {
+            "node": "AI Classify & Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Classify & Draft": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify then draft": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Classify & Draft",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Response": {
+      "main": [
+        [
+          {
+            "node": "Create Gmail Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Urgent?": {
+      "main": [
+        [
+          {
+            "node": "Alert on Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Gmail Draft": {
+      "main": [
+        [
+          {
+            "node": "Log to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log to Sheet": {
+      "main": [
+        [
+          {
+            "node": "Is Urgent?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "u5E5mSvoGpRKhrL6",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "7483cad8-65e4-40c7-9be5-f215659b8e94",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8db7fadead9e8a312a7283c8a846de056b308971de5bc82a192b771628dbc959"
+  },
+  "nodeGroups": [],
+  "id": "FXi1NYchVYb6I8oT",
+  "tags": []
+}
