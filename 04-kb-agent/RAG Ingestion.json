@@ -1,0 +1,208 @@
+{
+  "name": "RAG Ingestion",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "53e3bec7-a118-4b0a-88f1-714f89b073d2",
+      "name": "Start Ingestion"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1AiMsJHnhoRCnZCOL0smtX3si6zLqclVqYcNVQdxrclQ",
+          "mode": "list",
+          "cachedResultName": "NovaTech FAQ Data",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1AiMsJHnhoRCnZCOL0smtX3si6zLqclVqYcNVQdxrclQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "FAQs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1AiMsJHnhoRCnZCOL0smtX3si6zLqclVqYcNVQdxrclQ/edit#gid=0"
+        },
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "specifyRange",
+              "headerRow": 3,
+              "firstDataRow": 4
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "dee32b7f-6de7-4d0e-8ec7-03cd5c051cbd",
+      "name": "Fetch FAQs from Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "G1SOUkAIhFBnRpMF",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  return {\n    json: {\n      text: `Question: ${item.json.Question}\\nAnswer: ${item.json.Answer}`,\n      metadata: { source: 'NovaTech FAQ', category: item.json.Category }\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "4762774e-1015-4cac-8fe0-f42564967606",
+      "name": "Format Text for Embedding"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        528,
+        240
+      ],
+      "id": "aa0f119f-2e39-4fac-b16f-ba0a444baa5f",
+      "name": "Gemini Embedding Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "s9FXxWidlg1dQkGp",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.text }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "={{ $json.metadata }}",
+                "value": "={{ $json.metadata.source }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        816,
+        240
+      ],
+      "id": "9339b998-2904-409c-85ec-9a380ce5faf9",
+      "name": "Document Loader"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.4,
+      "position": [
+        672,
+        0
+      ],
+      "id": "68e8bc77-3f51-48dc-b518-ad05d26265ba",
+      "name": "Insert into Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "gvR2N3tCExAlWtZ9",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Start Ingestion": {
+      "main": [
+        [
+          {
+            "node": "Fetch FAQs from Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch FAQs from Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Format Text for Embedding",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Text for Embedding": {
+      "main": [
+        [
+          {
+            "node": "Insert into Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Embedding Model": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert into Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Document Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert into Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "3d7454bb-80ba-4547-b3d2-05f792e20088",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8db7fadead9e8a312a7283c8a846de056b308971de5bc82a192b771628dbc959"
+  },
+  "nodeGroups": [],
+  "id": "EVuCM6XkJZMOHNCC",
+  "tags": []
+}

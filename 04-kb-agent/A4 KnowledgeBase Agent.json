@@ -20,7 +20,7 @@
         "promptType": "define",
         "text": "={{ $json.chatInput }}",
         "options": {
-          "systemMessage": "You are a helpful customer support agent for NovaTech Solutions.\nFirst, ALWAYS use the Supabase Vector Store tool to search for an answer.\nIf you find a clear answer, give it to the user politely.\n\nIf the Supabase tool returns no information, or if the information is not relevant to the user's question, you MUST use the Log Escalation tool to log the question. After using the tool, tell the user: \"I don't have that information right now. Let me escalate this to a human agent.\""
+          "systemMessage": "You are a helpful customer support agent for NovaTech Solutions.\nYour job is to answer the user's question accurately using ONLY the information provided to you by your tools.\nIf you do not know the answer, or if the tool returns no information, politely say: \"I don't have that information right now. Let me escalate this to a human agent.\"\nDo not make up answers."
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
@@ -44,7 +44,7 @@
         },
         "topK": 3,
         "options": {
-          "queryName": "match_documents"
+          "queryName": "={{ $json.chatInput }}"
         }
       },
       "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
@@ -81,7 +81,7 @@
     },
     {
       "parameters": {
-        "modelName": "models/gemini-3.1-flash-lite",
+        "modelName": "models/gemini-2.5-flash-lite",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
@@ -96,72 +96,6 @@
         "googlePalmApi": {
           "id": "s9FXxWidlg1dQkGp",
           "name": "Google Gemini(PaLM) Api account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "descriptionType": "manual",
-        "toolDescription": "Use this tool ONLY when you cannot find the answer in the NovaTech knowledge base. It logs the user's question to a spreadsheet so a human can follow up.",
-        "operation": "append",
-        "documentId": {
-          "__rl": true,
-          "value": "1AiMsJHnhoRCnZCOL0smtX3si6zLqclVqYcNVQdxrclQ",
-          "mode": "list",
-          "cachedResultName": "NovaTech FAQ Data",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1AiMsJHnhoRCnZCOL0smtX3si6zLqclVqYcNVQdxrclQ/edit?usp=drivesdk"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": 303899000,
-          "mode": "list",
-          "cachedResultName": "Escalations",
-          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1AiMsJHnhoRCnZCOL0smtX3si6zLqclVqYcNVQdxrclQ/edit#gid=303899000"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "Question": "={{ $json.chatInput }}",
-            "Timestamp": "={{ $now.format('yyyy-MM-dd HH:mm') }}"
-          },
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "Question",
-              "displayName": "Question",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            },
-            {
-              "id": "Timestamp",
-              "displayName": "Timestamp",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "canBeUsedToMatch": true
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.googleSheetsTool",
-      "typeVersion": 4.7,
-      "position": [
-        384,
-        208
-      ],
-      "id": "f8c34aa9-2e3e-4783-94c1-08e3293835f4",
-      "name": "Append row in sheet in Google Sheets",
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "G1SOUkAIhFBnRpMF",
-          "name": "Google Sheets account"
         }
       }
     }
@@ -216,29 +150,14 @@
           }
         ]
       ]
-    },
-    "Append row in sheet in Google Sheets": {
-      "ai_tool": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
     }
   },
   "active": false,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate",
-    "timeSavedMode": "fixed",
-    "errorWorkflow": "u5E5mSvoGpRKhrL6",
-    "callerPolicy": "workflowsFromSameOwner",
-    "availableInMCP": false
+    "binaryMode": "separate"
   },
-  "versionId": "a18c0bea-944f-4dc8-b9f0-4467ec362b8c",
+  "versionId": "90e2f800-050e-4207-a73e-9d25f01fb126",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "8db7fadead9e8a312a7283c8a846de056b308971de5bc82a192b771628dbc959"
